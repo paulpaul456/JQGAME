@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Title</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+        body {
+            text-align: center;
+        }
+
+        #stage {
+            text-align: left;
+            display: inline-block;
+            position: relative;
+            width: 500px;
+            height: 400px;
+            background: #000000;
+            overflow: hidden;
+        }
+
+        .sprite {
+            display: inline-block;
+            position: absolute;
+        }
+
+        #player {
+            width: 16px;
+            height: 16px;
+            background: #FFCC00;
+        }
+
+        .bullet {
+            width: 10px;
+            height: 10px;
+            background: red;
+        }
+        #score{
+            width: 480px;
+            color: aliceblue;
+            font-size: 25px;
+            padding-right: 10px;
+            z-index: 999;
+            text-align: right;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <div id="stage">
+        <div id="player" class="sprite"></div>
+        <div id="score" class="sprite">0000</div>
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.js"
+        integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    <script>
+            function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        $(function () {
+            var $body = $("body"),
+                $stage = $('#stage'),
+                $player = $('#player'),
+                $score=$('#score'),
+                counter=0,
+                p_speed = 8,
+                p_xway = 0,
+                p_yway = 0,
+                bR=Math.sqrt( Math.pow($stage.width()/2,2)+ Math.pow($stage.height()/2,2)),//以舞台中心點擴展出去之半徑 為子彈生成之範圍
+                b_speed=3;
+               
+            var Key = {
+                UP: 38,
+                DOWN: 40,
+                LEFT: 37,
+                RIGHT: 39
+            }
+            $player.css('left', ($stage.width() - $player.width()) / 2 + "px");
+            $player.css('top', ($stage.height() - $player.height()) / 2 + "px");
+            $body.keydown(function (e) {
+                
+               
+                switch (e.which) {
+                    
+                    case Key.UP: p_yway = -1; break;//向量方位
+                    case Key.DOWN: p_yway = 1; break;
+                    case Key.LEFT: p_xway = -1; break;
+                    case Key.RIGHT: p_xway = 1; break;
+
+                }
+                
+            });
+            $body.keyup(function (e) {
+                p_xway = 0;
+                p_yway = 0;
+            })
+            //建立子彈
+            function createBullet(){
+                $stage.append("<div class='sprite bullet'></div>");
+                var b=$stage.find(".bullet:last"),
+                    b_angle=getRandomInt(0,359),
+                    bx=$stage.width()/2+bR*Math.cos(Math.PI*b_angle/180)-b.width()/2,//X為COS*半徑
+                    by=$stage.height()/2+bR*Math.sin(Math.PI*b_angle/180)-b.height()/2,//Y為SIN*半徑
+                    b_end_angle=getRandomInt(b_angle+90,b_angle+270);//子彈最終位置
+                    b.data("x_speed",b_speed*Math.cos(Math.PI*b_end_angle/180));//子彈飛往的方向X
+                    b.data("y_speed",b_speed*Math.sin(Math.PI*b_end_angle/180));//子彈飛往的方向Y
+                    
+
+                b.css("left",bx+"px");
+                b.css("top",by+"px");
+            }
+            for(var i=0;i<=100;i++){
+                createBullet();
+            }
+          
+
+
+            //角色動畫
+            var loop = setInterval(function () {
+                //PLAYER動畫
+                var xspeed = 0,
+                    yspeed = 0,
+                    x = parseInt($player.css("left")),//不parseInt拿到的會有"PX"
+                    y = parseInt($player.css("top"));
+                if (p_xway == -1 && p_yway == 0) xspeed = p_speed * p_xway;
+                if (p_xway == 0 && p_yway == -1) yspeed = p_speed * p_yway;
+                if (p_xway == 1 && p_yway == 0) xspeed = p_speed * p_xway;
+                if (p_xway == 0 && p_yway == 1) yspeed = p_speed * p_yway;
+                if (p_xway != 0 && p_yway != 0) {//斜角
+                    xspeed = p_speed / Math.sqrt(2) * p_xway;
+                    yspeed = p_speed / Math.sqrt(2) * p_yway;
+                }
+                x = x + xspeed;
+                y = y + yspeed;
+                if (x < 0) x = 0;//設定邊界
+                if (y < 0) y = 0;//設定邊界
+                if (x > $stage.width() - $player.width()) x = $stage.width() - $player.width();//設定邊界
+                if (y > $stage.height() - $player.height()) y = $stage.height() - $player.height();//設定邊界
+                $player.css("left", x + "px");
+                $player.css("top", y + "px");
+                //子彈移動動畫
+                $(".bullet").each(function(){
+                    var $this=$(this),
+                        bx=parseInt($this.css("left")) ,
+                        by=parseInt($this.css("top")),
+                        dist=Math.sqrt(Math.pow($stage.width()/2-(bx+$this.width()/2),2)+
+                        Math.pow($stage.height()/2-(by+$this.height()/2),2));
+                        bx=Math.round(bx+$this.data("x_speed"));
+                        by=Math.round(by+$this.data("y_speed")) ;
+                       
+                        $this.css("left",bx+"px");
+                        $this.css("top",by+"px");
+                       if( $this.width()/2+bR<dist){//如果子彈中心與舞台中心的距離大於圓的範圍則清除子彈
+                           $this.remove();
+                           createBullet();
+                       }
+                       //子彈與腳色碰撞
+                       var pcx=parseInt($player.css("left"))+$player.width()/2,
+                           pcy=parseInt($player.css("top"))+$player.height()/2,
+                           p_b_dist=Math.sqrt(Math.pow(pcx-(bx+$this.width()/2),2)+Math.pow(pcy-(by+$this.height()/2),2));
+                           if($this.width()/2+$player.width()/2>p_b_dist){
+                               clearInterval(loop);
+                           }
+
+                })
+                //顯示分數
+                $score.html(++counter);
+            }, 1000 / 60)
+            
+        })
+
+
+
+    </script>
+
+
+</body>
+
+</html>
